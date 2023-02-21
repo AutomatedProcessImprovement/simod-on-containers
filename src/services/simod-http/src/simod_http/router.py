@@ -1,17 +1,19 @@
 import logging
+import re
+from pathlib import Path
 from typing import Union, Optional
 
-from fastapi import BackgroundTasks, Response, Form, APIRouter
+from fastapi import Response, Form, APIRouter
 from fastapi.responses import JSONResponse
+from starlette.datastructures import UploadFile
 
-from simod.configuration import Configuration
-from simod.event_log.utilities import convert_xes_to_csv_if_needed
-from simod_http.app import Response as AppResponse, RequestStatus, NotFound, UnsupportedMediaType, NotSupported, app
+from .app import Response as AppResponse, RequestStatus, NotFound, UnsupportedMediaType, NotSupported, app, Request
+from .simod_utils import convert_xes_to_csv_if_needed
 
 router = APIRouter()
 
 
-@router.get('/discoveries/{request_id}/{file_name}')
+@router.get("/discoveries/{request_id}/{file_name}")
 async def read_discovery_file(request_id: str, file_name: str):
     """
     Get a file from a discovery request.
@@ -20,7 +22,11 @@ async def read_discovery_file(request_id: str, file_name: str):
 
     file_path = request.output_dir / file_name
     if not file_path.exists():
-        raise NotFound(request_id=request_id, request_status=request.status, message=f'File not found: {file_name}')
+        raise NotFound(
+            request_id=request_id,
+            request_status=request.status,
+            message=f"File not found: {file_name}",
+        )
 
     media_type = _infer_media_type_from_extension(file_name)
 
@@ -28,12 +34,12 @@ async def read_discovery_file(request_id: str, file_name: str):
         content=file_path.read_bytes(),
         media_type=media_type,
         headers={
-            'Content-Disposition': f'attachment; filename="{file_name}"',
-        }
+            "Content-Disposition": f'attachment; filename="{file_name}"',
+        },
     )
 
 
-@router.get('/discoveries/{request_id}')
+@router.get("/discoveries/{request_id}")
 async def read_discovery(request_id: str) -> AppResponse:
     """
     Get the status of the request.
@@ -47,9 +53,8 @@ async def read_discovery(request_id: str) -> AppResponse:
     )
 
 
-@router.post('/discoveries')
+@router.post("/discoveries")
 async def create_discovery(
-        background_tasks: BackgroundTasks,
         configuration=Form(),
         event_log=Form(),
         callback_url: Optional[str] = None,
@@ -67,13 +72,15 @@ async def create_discovery(
         raise NotSupported(
             request_id=request.id,
             request_status=request.status,
-            message='Email notifications are not supported',
+            message="Email notifications are not supported",
         )
 
     event_log_path = _save_event_log(event_log, request)
     event_log_csv_path = convert_xes_to_csv_if_needed(event_log_path)
 
-    configuration_path = _update_config_and_save(configuration, event_log_csv_path, request)
+    configuration_path = _update_config_and_save(
+        configuration, event_log_csv_path, request
+    )
 
     request.configuration_path = configuration_path.absolute()
     request.status = RequestStatus.ACCEPTED
@@ -90,33 +97,47 @@ async def create_discovery(
     return response.json_response(status_code=202)
 
 
-def _update_config_and_save(configuration, event_log_csv_path, request):
-    configuration = Configuration.from_stream(configuration.file)
-    configuration.common.log_path = event_log_csv_path.absolute()
-    configuration.common.test_log_path = None  # TODO: test log is not supported in request params
-    configuration_path = configuration.to_yaml(request.output_dir)
+def _update_config_and_save(configuration: UploadFile, event_log_csv_path: Path, request: Request):
+    data = configuration.file.read()
+    configuration.file.close()
+
+    # regexp to replace "log_path: .*" with "log_path: <path>"
+    regexp = r'log_path: .*\n'
+    replacement = f'log_path: {event_log_csv_path.absolute()}\n'
+    data = re.sub(regexp, replacement, data.decode('utf-8'))
+
+    # test log is not supported in request params
+    regexp = r'test_log_path: .*\n'
+    replacement = f'test_log_path: None\n'
+    data = re.sub(regexp, replacement, data)
+
+    configuration_path = request.output_dir / 'configuration.yaml'
+    configuration_path.write_text(data)
+
     return configuration_path
 
 
 def _save_event_log(event_log, request):
-    event_log_file_extension = _infer_event_log_file_extension_from_header(event_log.content_type)
+    event_log_file_extension = _infer_event_log_file_extension_from_header(
+        event_log.content_type
+    )
     if event_log_file_extension is None:
         raise UnsupportedMediaType(
             request_id=request.id,
             request_status=request.status,
             archive_url=None,
-            message='Unsupported event log file type',
+            message="Unsupported event log file type",
         )
-    event_log_path = request.output_dir / f'event_log{event_log_file_extension}'
+    event_log_path = request.output_dir / f"event_log{event_log_file_extension}"
     event_log_path.write_bytes(event_log.file.read())
     return event_log_path
 
 
 def _infer_event_log_file_extension_from_header(content_type: str) -> Union[str, None]:
-    if 'text/csv' in content_type:
-        return '.csv'
-    elif 'application/xml' in content_type or 'text/xml' in content_type:
-        return '.xml'
+    if "text/csv" in content_type:
+        return ".csv"
+    elif "application/xml" in content_type or "text/xml" in content_type:
+        return ".xml"
     else:
         return None
 

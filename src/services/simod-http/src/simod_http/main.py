@@ -9,8 +9,8 @@ from fastapi.responses import JSONResponse
 from fastapi_utils.tasks import repeat_every
 from uvicorn.config import LOGGING_CONFIG
 
-from simod_http.app import RequestStatus, BaseRequestException, NotFound, app
-from simod_http.router import router
+from .app import RequestStatus, BaseRequestException, NotFound, app, Request
+from .router import router
 
 api = FastAPI()
 api.include_router(router)
@@ -85,17 +85,29 @@ async def clean_up():
                 logging.error(f'Failed to load request: {request_dir.name}, {str(e)}')
                 continue
 
-            # Removes expired requests
-            if request.status in [RequestStatus.UNKNOWN, RequestStatus.SUCCESS, RequestStatus.FAILURE]:
-                expired_at = request.timestamp + expire_after_delta
-                if expired_at <= current_timestamp:
-                    logging.info(f'Removing request folder for {request_dir.name}, expired at {expired_at}')
-                    shutil.rmtree(request_dir, ignore_errors=True)
+            await _remove_expired_requests(current_timestamp, expire_after_delta, request, request_dir)
 
-            # Removes requests without timestamp that are not running
-            if request.timestamp is None and request.status not in [RequestStatus.ACCEPTED, RequestStatus.RUNNING]:
-                logging.info(f'Removing request folder for {request_dir.name}, no timestamp and not running')
-                shutil.rmtree(request_dir, ignore_errors=True)
+            await _remove_not_running_not_timestamped_requests(request, request_dir)
+
+
+async def _remove_not_running_not_timestamped_requests(request: Request, request_dir: Path):
+    # Removes requests without timestamp that are not running
+    if request.timestamp is None and request.status not in [RequestStatus.ACCEPTED, RequestStatus.RUNNING]:
+        logging.info(f'Removing request folder for {request_dir.name}, no timestamp and not running')
+        shutil.rmtree(request_dir, ignore_errors=True)
+
+
+async def _remove_expired_requests(
+        current_timestamp: pd.Timestamp,
+        expire_after_delta: pd.Timedelta,
+        request: Request,
+        request_dir: Path,
+):
+    if request.status in [RequestStatus.UNKNOWN, RequestStatus.SUCCESS, RequestStatus.FAILURE]:
+        expired_at = request.timestamp + expire_after_delta
+        if expired_at <= current_timestamp:
+            logging.info(f'Removing request folder for {request_dir.name}, expired at {expired_at}')
+            shutil.rmtree(request_dir, ignore_errors=True)
 
 
 async def _remove_empty_or_orphaned_request_dir(request_dir):
