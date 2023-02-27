@@ -62,30 +62,72 @@ roleRef:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: simod-queue-worker
+  name: simod-http
 spec:
   selector:
     matchLabels:
-      app: simod-queue-worker
+      app: simod-http
   template:
     metadata:
       labels:
-        app: simod-queue-worker
+        app: simod-http
     spec:
       volumes:
         - name: simod-data
           persistentVolumeClaim:
             claimName: simod-volume-claim
       containers:
-        - name: worker
-          image: nokal/simod-queue-worker:0.0.0
+        - name: simod-http
+          image: nokal/simod-http:0.3.1
+          env:
+            - name: BROKER_URL
+              value: "amqp://guest:guest@rabbitmq-service:5672"
+            - name: SIMOD_EXCHANGE_NAME
+              value: "simod"
+            - name: SIMOD_PENDING_ROUTING_KEY
+              value: "requests.status.pending"
+            - name: SIMOD_HTTP_PORT
+              value: "8000"
+            - name: SIMOD_HTTP_STORAGE_PATH
+              value: "/tmp/simod-volume/data"
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: simod-data
+              mountPath: /tmp/simod-volume
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simod-job-controller
+spec:
+  selector:
+    matchLabels:
+      app: simod-job-controller
+  template:
+    metadata:
+      labels:
+        app: simod-job-controller
+    spec:
+      volumes:
+        - name: simod-data
+          persistentVolumeClaim:
+            claimName: simod-volume-claim
+      containers:
+        - name: simod-job-controller
+          image: nokal/simod-job-controller:0.2.2
           env:
             - name: BROKER_URL
               value: amqp://guest:guest@rabbitmq-service:5672
-            - name: SIMOD_REQUESTS_QUEUE_NAME
-              value: requests
-            - name: SIMOD_RESULTS_QUEUE_NAME
-              value: results
+            - name: SIMOD_EXCHANGE_NAME
+              value: simod
+            - name: SIMOD_PENDING_ROUTING_KEY
+              value: requests.status.pending
             - name: SIMOD_DOCKER_IMAGE
               value: nokal/simod:3.3.0
             - name: KUBERNETES_NAMESPACE
@@ -104,34 +146,32 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: simod-http
+  name: simod-request-status-observer
 spec:
   selector:
     matchLabels:
-      app: simod-http
+      app: simod-request-status-observer
   template:
     metadata:
       labels:
-        app: simod-http
+        app: simod-request-status-observer
     spec:
       volumes:
         - name: simod-data
           persistentVolumeClaim:
             claimName: simod-volume-claim
       containers:
-        - name: http
-          image: nokal/simod-http:0.2.0
+        - name: simod-request-status-observer
+          image: nokal/simod-request-status-observer:0.1.1
           env:
-            - name: RABBITMQ_URL
-              value: "amqp://guest:guest@rabbitmq-service:5672"
-            - name: SIMOD_REQUESTS_QUEUE_NAME
-              value: "requests"
-            - name: SIMOD_RESULTS_QUEUE_NAME
-              value: "results"
-            - name: SIMOD_HTTP_PORT
-              value: "8000"
+            - name: BROKER_URL
+              value: amqp://guest:guest@rabbitmq-service:5672
+            - name: SIMOD_EXCHANGE_NAME
+              value: simod
+            - name: SIMOD_STATUS_WORKER_BINDING_KEY
+              value: requests.status.*
             - name: SIMOD_HTTP_STORAGE_PATH
-              value: "/tmp/simod-volume/data"
+              value: /tmp/simod-volume/data
           resources:
             limits:
               cpu: 100m
