@@ -43,7 +43,7 @@ metadata:
 rules:
   - apiGroups: [ "", "batch" ]
     resources: [ "jobs" ]
-    verbs: [ "get", "list", "watch", "create", "update", "patch", "delete" ]
+    verbs: [ "*" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -120,7 +120,7 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: simod-job-controller
-          image: nokal/simod-job-controller:0.2.2
+          image: nokal/simod-job-controller:0.3.0
           env:
             - name: BROKER_URL
               value: amqp://guest:guest@rabbitmq-service:5672

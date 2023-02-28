@@ -23,7 +23,7 @@ services:
       - 8000:8000
 
   simod-job-controller:
-    image: nokal/simod-job-controller:0.2.2
+    image: nokal/simod-job-controller:0.3.0
     depends_on:
       - rabbitmq-service
     restart: unless-stopped
