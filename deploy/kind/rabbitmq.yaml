@@ -13,7 +13,7 @@ spec:
         component: rabbitmq
     spec:
       containers:
-      - image: rabbitmq
+      - image: nokal/rabbitmq:3.11-alpine
         name: rabbitmq
         ports:
         - containerPort: 5672
