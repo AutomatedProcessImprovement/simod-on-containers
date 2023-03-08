@@ -120,16 +120,22 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: simod-job-controller
-          image: nokal/simod-job-controller:0.3.1
+          image: nokal/simod-job-controller-go:0.2.4
           env:
             - name: BROKER_URL
               value: amqp://guest:guest@rabbitmq-service:5672
             - name: SIMOD_EXCHANGE_NAME
               value: simod
-            - name: SIMOD_PENDING_ROUTING_KEY
-              value: requests.status.pending
             - name: SIMOD_DOCKER_IMAGE
               value: nokal/simod:3.3.0
+            - name: SIMOD_JOB_RESOURCE_CPU_REQUEST
+              value: "1"
+            - name: SIMOD_JOB_RESOURCE_CPU_LIMIT
+              value: "5"
+            - name: SIMOD_JOB_RESOURCE_MEMORY_REQUEST
+              value: "2Gi"
+            - name: SIMOD_JOB_RESOURCE_MEMORY_LIMIT
+              value: "4Gi"
             - name: KUBERNETES_NAMESPACE
               value: default
           resources:
@@ -142,6 +148,30 @@ spec:
           volumeMounts:
             - name: simod-data
               mountPath: /tmp/simod-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simod-job-controller
+  labels:
+    app: simod-job-controller
+spec:
+  selector:
+    app: simod-job-controller
+  ports:
+  - name: web
+    port: 8080
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: simod-job-controller
+spec:
+  selector:
+    matchLabels:
+      app: simod-job-controller
+  endpoints:
+  - port: web
 ---
 apiVersion: apps/v1
 kind: Deployment
