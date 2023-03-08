@@ -42,7 +42,7 @@ metadata:
   namespace: default
 rules:
   - apiGroups: [ "", "batch" ]
-    resources: [ "jobs" ]
+    resources: [ "jobs", "pods" ]
     verbs: [ "*" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -120,7 +120,7 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: simod-job-controller
-          image: nokal/simod-job-controller-go:0.2.4
+          image: nokal/simod-job-controller-go:0.3.1
           env:
             - name: BROKER_URL
               value: amqp://guest:guest@rabbitmq-service:5672
