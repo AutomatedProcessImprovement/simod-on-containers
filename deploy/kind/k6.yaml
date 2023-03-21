@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-load-test
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    metadata:
+      name: k6-load-test
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: k6-load-test
+          image: nokal/k6:0.1.0
+          command: [ "bash", "run.sh" ]
+          env:
+            - name: REPORT_OUTPUT_DIR
+              value: /tmp/simod-volume/k6
+            - name: SIMOD_HTTP_URL
+              value: http://simod-http:8000
+            - name: K6_VUS
+              value: "10"
+            - name: K6_DURATION
+              value: "1m"
+            - name: K6_RPS
+              value: "10"
+            - name: SCRIPT_NAME
+              value: "k6-load-test-1.js"
+          volumeMounts:
+            - name: simod-data
+              mountPath: /tmp/simod-volume
+      volumes:
+        - name: simod-data
+          persistentVolumeClaim:
+            claimName: simod-volume-claim
