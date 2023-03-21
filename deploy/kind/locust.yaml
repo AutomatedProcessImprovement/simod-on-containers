@@ -14,16 +14,16 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: locust-master
-          image: nokal/simod-http-locust:0.7.3
+          image: nokal/simod-http-locust:1.0.1
           env:
             - name: SIMOD_HTTP_URL
               value: http://simod-http:8000
             - name: LOCUST_HOST
               value: http://simod-http:8000
             - name: LOCUST_USERS
-              value: "1000"
+              value: "500"
             - name: LOCUST_SPAWN_RATE
-              value: "20"
+              value: "10"
             - name: LOCUST_RUN_TIME
               value: "3m"
             - name: LOCUST_HEADLESS
@@ -61,7 +61,7 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: locust-worker
-          image: nokal/simod-http-locust:0.7.3
+          image: nokal/simod-http-locust:1.0.1
           env:
             - name: SIMOD_HTTP_URL
               value: http://simod-http:8000

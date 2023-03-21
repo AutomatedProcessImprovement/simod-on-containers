@@ -1,6 +1,15 @@
 FROM locustio/locust:2.15.1
 
-RUN pip install requests-toolbelt
+WORKDIR /home/locust
 
-ADD locustfile.py /home/locust/locustfile.py
-ADD assets /home/locust/assets
+ADD assets assets
+ADD locustfile.py ./
+ADD run.sh ./
+
+ENV PYTHONUNBUFFERED=1
+ENV SIMOD_HTTP_URL=http://simod-http:8000
+
+EXPOSE 8089
+EXPOSE 5557
+
+ENTRYPOINT ["bash", "run.sh"]
