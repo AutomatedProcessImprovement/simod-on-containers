@@ -11,4 +11,5 @@ k6 run \
 --rps $K6_RPS \
 --out csv=$output_dir/stats.csv \
 --no-usage-report \
+--discard-response-bodies \
 $SCRIPT_NAME
