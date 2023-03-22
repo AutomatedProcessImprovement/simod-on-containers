@@ -10,6 +10,8 @@ packages = [{include = "locust_load_testing"}]
 python = "^3.9"
 locust = "^2.15.0"
 requests-toolbelt = "^0.10.1"
+pandas = "^1.5.3"
+matplotlib = "^3.7.1"
 
 
 [build-system]
