@@ -3,6 +3,7 @@ kind: Job
 metadata:
   name: locust-master
 spec:
+  ttlSecondsAfterFinished: 60
   template:
     metadata:
       labels:
@@ -21,9 +22,9 @@ spec:
             - name: LOCUST_HOST
               value: http://simod-http:8000
             - name: LOCUST_USERS
-              value: "500"
+              value: "180"
             - name: LOCUST_SPAWN_RATE
-              value: "10"
+              value: "16"
             - name: LOCUST_RUN_TIME
               value: "3m"
             - name: LOCUST_HEADLESS
@@ -36,10 +37,6 @@ spec:
               value: /tmp/simod-volume/locust
           ports:
             - containerPort: 8089
-          resources:
-            limits:
-              cpu: 1
-              memory: 1Gi
           volumeMounts:
             - name: simod-data
               mountPath: /tmp/simod-volume
@@ -50,6 +47,7 @@ kind: Job
 metadata:
   name: locust-worker
 spec:
+  ttlSecondsAfterFinished: 60
   template:
     metadata:
       labels:
@@ -71,10 +69,6 @@ spec:
               value: locust-master
           ports:
             - containerPort: 8089
-          resources:
-            limits:
-              cpu: 1
-              memory: 2Gi
           volumeMounts:
             - name: simod-data
               mountPath: /tmp/simod-volume

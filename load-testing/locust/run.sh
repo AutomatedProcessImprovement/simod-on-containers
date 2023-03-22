@@ -16,7 +16,7 @@ if [ -n "$REPORT_OUTPUT_DIR" ]; then
     --loglevel INFO \
     --html $output_dir/report.html \
     --autostart \
-    --autoquit 0 \
+    --autoquit 1 \
     --master
 
 else
