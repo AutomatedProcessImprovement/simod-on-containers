@@ -33,18 +33,8 @@ kubectl apply -f metrics-server.yaml
 
 ## Locust
 
-https://github.com/deliveryhero/helm-charts/tree/master/stable/locust
-https://docs.locust.io/en/stable/running-in-docker.html
-
 ```shell
-helm repo add deliveryhero https://charts.deliveryhero.io/
-#kubectl create configmap locustfile --from-file ../../load-testing/locust/main.py
-helm install locust deliveryhero/locust \
---set loadtest.name=simod \
---set loadtest.locust_host=http://simod-http \
---set master.image=nokal/locust:2.15.1 \
---set worker.image=nokal/locust:2.15.1
-kubectl --namespace default port-forward service/locust 8089:8089
+kubectl apply -f locust.yaml
 ```
 
 ## Mongo
