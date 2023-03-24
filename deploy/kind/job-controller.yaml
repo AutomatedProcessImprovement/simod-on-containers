@@ -17,7 +17,7 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: simod-job-controller
-          image: nokal/simod-job-controller-go:0.5.7
+          image: nokal/simod-job-controller-go:0.6.0
           env:
             - name: BROKER_URL
               value: amqp://guest:guest@rabbitmq-service:5672
@@ -27,12 +27,8 @@ spec:
               value: nokal/simod:3.3.0
             - name: SIMOD_JOB_RESOURCE_CPU_REQUEST
               value: "2"
-            - name: SIMOD_JOB_RESOURCE_CPU_LIMIT
-              value: "10"
             - name: SIMOD_JOB_RESOURCE_MEMORY_REQUEST
               value: "2Gi"
-            - name: SIMOD_JOB_RESOURCE_MEMORY_LIMIT
-              value: "8Gi"
             - name: SIMOD_HTTP_HOST
               value: simod-http
             - name: SIMOD_HTTP_PORT

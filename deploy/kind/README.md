@@ -11,13 +11,25 @@ kubectl apply -f rabbitmq.yaml
 https://prometheus-operator.dev/docs/prologue/quick-start/
 
 ```shell
+# download
 git clone https://github.com/prometheus-operator/kube-prometheus.git
 cd kube-prometheus
-kubectl create -f manifests/setup
-kubectl create -f manifests/
+git checkout tags/v0.12.0
+
+# run
+kubectl apply --server-side -f manifests/setup
+kubectl wait \
+	--for condition=Established \
+	--all CustomResourceDefinition \
+	--namespace=monitoring
+kubectl apply -f manifests/
+
+# port-forward
 kubectl --namespace monitoring port-forward svc/prometheus-k8s 9090
 kubectl --namespace monitoring port-forward svc/alertmanager-main 9093
 kubectl --namespace monitoring port-forward svc/grafana 3000
+
+# delete
 kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
 ```
 

@@ -1,35 +1,41 @@
-apiVersion: v1
-kind: ReplicationController
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  labels:
-    component: rabbitmq
-  name: rabbitmq-controller
+  name: rabbitmq
 spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
   replicas: 1
   template:
     metadata:
       labels:
-        app: taskQueue
-        component: rabbitmq
+        app: rabbitmq
     spec:
       containers:
-      - image: nokal/rabbitmq:3.11-alpine
-        name: rabbitmq
-        ports:
-        - containerPort: 5672
-        resources:
-          limits:
-            cpu: 500m
+        - image: rabbitmq:3.11-management-alpine
+          name: rabbitmq
+          ports:
+            - containerPort: 5672
+              name: amqp
+            - containerPort: 15672
+              name: http
+          resources:
+            requests:
+              cpu: 256m
+              memory: 256Mi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    component: rabbitmq
   name: rabbitmq-service
+  labels:
+    app: rabbitmq
 spec:
   ports:
-  - port: 5672
+    - port: 5672
+      name: amqp
+    - port: 15672
+      name: http
   selector:
-    app: taskQueue
-    component: rabbitmq
+    app: rabbitmq

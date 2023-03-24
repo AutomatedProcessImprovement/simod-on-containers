@@ -22,11 +22,11 @@ spec:
             - name: LOCUST_HOST
               value: http://simod-http:8000
             - name: LOCUST_USERS
-              value: "180"
+              value: "100"
             - name: LOCUST_SPAWN_RATE
-              value: "16"
+              value: "4"
             - name: LOCUST_RUN_TIME
-              value: "3m"
+              value: "1m"
             - name: LOCUST_HEADLESS
               value: "true"
             - name: LOCUST_EXPECT_WORKERS
