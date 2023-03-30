@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: simod-http
 spec:
-  replicas: 4
   selector:
     matchLabels:
       app: simod-http
@@ -68,3 +67,15 @@ spec:
   ports:
     - name: web
       port: 8000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: simod-http
+spec:
+  maxReplicas: 6
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: simod-http

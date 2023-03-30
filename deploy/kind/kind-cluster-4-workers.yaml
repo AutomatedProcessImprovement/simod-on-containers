@@ -12,3 +12,13 @@ nodes:
     extraMounts:
       - hostPath: /tmp/simod-volume
         containerPath: /tmp/simod-volume
+
+  - role: worker
+    extraMounts:
+      - hostPath: /tmp/simod-volume
+        containerPath: /tmp/simod-volume
+
+  - role: worker
+    extraMounts:
+      - hostPath: /tmp/simod-volume
+        containerPath: /tmp/simod-volume
