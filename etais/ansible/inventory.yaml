@@ -1,0 +1,12 @@
+all:
+  children:
+    masters:
+      hosts:
+        pix-control-plane:
+          ansible_host: pix-control-plane
+          user: ubuntu
+    workers:
+      hosts:
+        pix-worker-1:
+          ansible_host: pix-worker-1
+          user: ubuntu

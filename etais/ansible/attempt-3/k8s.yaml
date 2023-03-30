@@ -1,0 +1,43 @@
+- hosts:
+    - masters
+  become: yes
+  vars:
+    control_plane_endpoint: "pix-control-plane.cloud.ut.ee"
+    pod_network_cidr: "192.168.0.0/16"
+  tasks:
+    - name: Add Google's key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+
+    - name: Install Kubernetes
+      apt:
+        update_cache: yes
+        name: "{{ item }}"
+        state: present
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+
+    - name: Initialize Kubernetes
+      shell: kubeadm init --control-plane-endpoint "{{ control_plane_endpoint }}" --pod-network-cidr "{{ pod_network_cidr }}"
+
+    - name: Copy kubeconfig
+      shell: |
+        mkdir -p $HOME/.kube
+        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown $(id -u):$(id -g) $HOME/.kube/config
+
+    - name: Install Calico network addon
+      shell: |
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/custom-resources.yaml
+
+    - name: Generate join token for worker nodes
+      shell: kubeadm token create --print-join-command > /tmp/join-command.sh

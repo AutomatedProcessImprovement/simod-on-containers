@@ -1,0 +1,30 @@
+- hosts:
+    - masters
+    - workers
+  become: yes
+  tasks:
+    - name: Create kube user
+      user:
+        name: kube
+        append: yes
+        group: sudo
+        state: present
+        createhome: yes
+        shell: /bin/bash
+
+    - name: Allow kube user to sudo
+      lineinfile:
+        path: /etc/sudoers
+        line: "kube ALL=(ALL) NOPASSWD:ALL"
+        state: present
+        validate: "visudo -cf %s"
+
+    - name: Get content of authorized_key
+      command: cat /home/ubuntu/.ssh/authorized_keys
+      register: authorized_key
+
+    - name: Copy authorized keys from ubuntu user to kube
+      authorized_key:
+        user: kube
+        key: "{{ authorized_key.stdout }}"
+        state: present

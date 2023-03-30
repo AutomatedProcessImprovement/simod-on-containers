@@ -1,0 +1,35 @@
+- name: Set up Kubernetes control plane
+  hosts: pix-control-plane
+  become: yes
+  tasks:
+    - name: Disable swap
+      shell: swapoff -a
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Install dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - docker.io
+    - name: Download the Google Cloud public signing key
+      shell: curl -fsSLo /etc/apt/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    - name: Add the Kubernetes apt repository
+      shell: echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Install Kubernetes
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+    - name: Initialize Kubernetes
+      shell: kubeadm init

@@ -1,0 +1,60 @@
+- hosts:
+    - masters
+  become: yes
+
+  tasks:
+    - name: Initialize Kubernetes cluster
+      shell: |
+        kubeadm init --pod-network-cidr=10.244.0.0/16
+      args:
+        chdir: $HOME
+        creates: cluster_initialized.txt
+
+    - name: Copy kube directory
+      become: yes
+      become_user: kube
+      file:
+        path: $HOME/.kube
+        state: directory
+        mode: 0755
+
+    - name: Copy kube config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/kube/.kube/config
+        remote_src: yes
+        owner: kube
+        group: sudo
+
+    - name: Copy calico.yaml for the Pod network
+      become: yes
+      become_user: kube
+      copy:
+        src: calico.yaml
+        dest: $HOME/calico.yaml
+        owner: kube
+
+    - name: Install the Pod network
+      become: yes
+      become_user: kube
+      shell: |
+        kubectl apply -f $HOME/calico.yaml
+
+    - name: Get the token for joining the cluster
+      become: yes
+      become_user: kube
+      shell: |
+        kubeadm token create --print-join-command
+      register: join_command
+
+    - debug:
+        msg: "{{ join_command.stdout }}"
+
+    - name: Copy join command to file
+      become: yes
+      become_user: kube
+      copy:
+        content: "{{ join_command.stdout }}"
+        dest: $HOME/join_command.txt
+        owner: kube
+        mode: 0644

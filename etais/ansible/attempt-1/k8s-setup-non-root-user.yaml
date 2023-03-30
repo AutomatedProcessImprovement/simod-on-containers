@@ -1,0 +1,27 @@
+- name: Set up Kubernetes control plane non-root user
+  hosts: pix-control-plane
+  become: yes
+  vars:
+    user: ubuntu
+    homedir: /home/ubuntu
+  tasks:
+    - name: Make kube homedir
+      file:
+        path: "{{ homedir }}/.kube"
+        state: directory
+        owner: "{{ user }}"
+        group: "{{ user }}"
+    - name: Copy kube config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{ homedir }}/.kube/config"
+        remote_src: yes
+    - name: Set up kube config permissions
+      file:
+        path: "{{ homedir }}/.kube/config"
+        mode: 0600
+    - name: Change ownership of kube config
+      file:
+        path: "{{ homedir }}/.kube/config"
+        owner: "{{ user }}"
+        group: "{{ user }}"
