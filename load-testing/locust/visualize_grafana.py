@@ -2,12 +2,21 @@ import argparse
 import logging
 import os
 from pathlib import Path
+from typing import Tuple, List, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib import gridspec
 
 
-def visualize_amount_of_jobs(input_dir: Path):
+def make_grid(rows: int, columns: int = 1, figsize: tuple = (10, 20)) -> Tuple[plt.Figure, List[plt.Axes]]:
+    fig = plt.figure(tight_layout=True, figsize=figsize)
+    gs = gridspec.GridSpec(rows, columns)
+    axes = [fig.add_subplot(gs[i, :]) for i in range(rows)]
+    return fig, axes
+
+
+def visualize_amount_of_jobs(input_dir: Path, ax: Optional[plt.Axes] = None):
     prefix = 'Amount of Jobs-data-'
 
     df = pd.DataFrame()
@@ -30,20 +39,54 @@ def visualize_amount_of_jobs(input_dir: Path):
 
     convert_time_column_to_timedelta(df, 'Time')
 
-    plt.plot(df['Time'], df['failed'], label='failed')
-    plt.plot(df['Time'], df['pending'], label='pending')
-    plt.plot(df['Time'], df['running'], label='running')
-    plt.plot(df['Time'], df['succeeded'], label='ducceeded')
-    plt.title('Amount of Jobs')
-    plt.xlabel('Timedelta, minutes')
-    plt.ylabel('Count')
-    plt.grid()
-    plt.legend()
+    if ax is None:
+        fig, axes = make_grid(1, 1)
+        ax = axes[0]
 
-    output_path = input_dir / 'amount_of_jobs.png'
-    plt.savefig(output_path)
+    if 'failed' in df.columns:
+        ax.plot(df['Time'], df['failed'], label='failed', color='red')
+    if 'pending' in df.columns:
+        ax.plot(df['Time'], df['pending'], label='pending', color='orange')
+    if 'running' in df.columns:
+        ax.plot(df['Time'], df['running'], label='running', color='blue')
+    if 'succeeded' in df.columns:
+        ax.plot(df['Time'], df['succeeded'], label='succeeded', color='green')
+    ax.set_title('Amount of Jobs')
+    ax.set_xlabel('Timedelta, minutes')
+    ax.set_ylabel('Count')
 
-    plt.clf()
+    ax.set_yticks([0, df['running'].max(), df['succeeded'].max(), df['pending'].max()])
+
+    # x ticks starting from 0 and every 5 minutes and ending at the max value
+    x_ticks = [0]
+    x_ticks.extend(range(0, round(df['Time'].max()), 5))
+    if x_ticks[-1] != round(df['Time'].max()):
+        x_ticks.append(round(df['Time'].max()))
+    ax.set_xticks(x_ticks)
+
+    running_max_time = df[df['running'] == df['running'].max()]['Time'].values[0]
+    succeeded_max_time = df[df['succeeded'] == df['succeeded'].max()]['Time'].values[0]
+
+    ax.annotate(
+        f'{df["running"].max()}',
+        xy=(running_max_time, df['running'].max()),
+        xytext=(running_max_time, df['running'].max()),
+        arrowprops=dict(facecolor='blue', shrink=0.05),
+    )
+
+    ax.annotate(
+        f'{df["succeeded"].max()}',
+        xy=(succeeded_max_time, df['succeeded'].max()),
+        xytext=(succeeded_max_time, df['succeeded'].max()),
+        arrowprops=dict(facecolor='green', shrink=0.05),
+    )
+
+    ax.grid()
+    ax.legend()
+
+    if ax is None:
+        output_path = input_dir / 'amount_of_jobs.png'
+        plt.savefig(str(output_path))
 
 
 def visualize_single_file(
@@ -56,6 +99,7 @@ def visualize_single_file(
         y_label: str = 'Y Label',
         grid: bool = True,
         legend: bool = False,
+        ax: Optional[plt.Axes] = None,
 ):
     for file_name in os.listdir(input_dir):
         if prefix not in file_name or Path(file_name).suffix != '.csv':
@@ -65,20 +109,21 @@ def visualize_single_file(
 
         convert_time_column_to_timedelta(df, time_column)
 
-        plt.plot(df[time_column], df[value_column])
-        plt.title(title)
-        plt.xlabel(x_label)
-        plt.ylabel(y_label)
-        plt.grid(grid)
+        if ax is None:
+            fig, axes = make_grid(1, 1)
+            ax = axes[0]
+
+        ax.plot(df[time_column], df[value_column])
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.grid(grid)
         if legend:
-            plt.legend()
+            ax.legend()
 
-        output_path = input_dir / file_name.replace('.csv', '.png')
-        plt.savefig(output_path)
-
-        plt.clf()
-        print(f'Output saved to {output_path}')
-        break
+        if ax is None:
+            output_path = input_dir / file_name.replace('.csv', '.png')
+            plt.savefig(output_path)
 
 
 def convert_time_column_to_timedelta(df: pd.DataFrame, time_column: str):
@@ -93,18 +138,21 @@ if __name__ == '__main__':
     parser.add_argument('directory', type=Path, help='Directory to with CSV files exported from Grafana')
     args = parser.parse_args()
 
-    visualize_amount_of_jobs(args.directory)
+    fig, axes = make_grid(4)
 
-    visualize_single_file(
-        args.directory,
-        prefix='Amount of Active Jobs (kube)-data-',
-        title='Active Jobs',
-        value_column='sum(kube_job_status_active)',
-        x_label='Timedelta, minutes',
-        y_label='Count',
-        grid=True,
-        legend=False,
-    )
+    visualize_amount_of_jobs(args.directory, ax=axes[0])
+
+    # visualize_single_file(
+    #     args.directory,
+    #     prefix='Amount of Active Jobs (kube)-data-',
+    #     title='Active Jobs',
+    #     value_column='sum(kube_job_status_active)',
+    #     x_label='Timedelta, minutes',
+    #     y_label='Count',
+    #     grid=True,
+    #     legend=False,
+    #     ax=axes[1],
+    # )
 
     visualize_single_file(
         args.directory,
@@ -115,6 +163,7 @@ if __name__ == '__main__':
         y_label='Count',
         grid=True,
         legend=False,
+        ax=axes[1],
     )
 
     visualize_single_file(
@@ -126,6 +175,7 @@ if __name__ == '__main__':
         y_label='Duration, seconds',
         grid=True,
         legend=False,
+        ax=axes[2],
     )
 
     visualize_single_file(
@@ -137,4 +187,10 @@ if __name__ == '__main__':
         y_label='Duration, seconds',
         grid=True,
         legend=False,
+        ax=axes[3],
     )
+
+    fig.align_ylabels(axes)
+
+    output_path = args.directory / 'grafana_data.png'
+    plt.savefig(str(output_path))
