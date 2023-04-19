@@ -17,7 +17,7 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: simod-http
-          image: nokal/simod-http:0.10.2
+          image: nokal/simod-http:0.10.4
           command: [ "/bin/bash" ]
           args: [ "run_uvicorn.sh" ]
           env:

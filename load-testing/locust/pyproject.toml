@@ -1,10 +1,9 @@
 [tool.poetry]
 name = "locust-load-testing"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["Ihar Suvorau <ihar.suvorau@gmail.com>"]
 readme = "README.md"
-packages = [{include = "locust_load_testing"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -13,6 +12,7 @@ requests-toolbelt = "^0.10.1"
 pandas = "^1.5.3"
 matplotlib = "^3.7.1"
 requests = "^2.28.2"
+numpy = "^1.24.2"
 
 
 [build-system]

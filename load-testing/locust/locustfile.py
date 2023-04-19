@@ -3,6 +3,7 @@ import random
 from pathlib import Path
 
 from locust import task, FastHttpUser
+from locust.contrib.fasthttp import FastHttpSession
 
 
 class User(FastHttpUser):
@@ -15,57 +16,24 @@ class User(FastHttpUser):
 
     @task
     def post1(self):
-        self.make_post()
+        make_post(self.client, self.assets_dir, self.endpoint_url, 'PurchasingExample.xes')
 
     @task
     def post2(self):
-        self.make_post()
+        make_post(self.client, self.assets_dir, self.endpoint_url, 'PurchasingExample.xes')
 
-    @task
-    def post3(self):
-        self.make_post()
 
-    @task
-    def post4(self):
-        self.make_post()
+def make_post(client: FastHttpSession, assets_dir: Path, endpoint_url: str, event_log_name: str):
+    configuration_path = assets_dir / 'sample.yaml'
+    event_log_path = assets_dir / event_log_name
 
-    @task
-    def post5(self):
-        self.make_post()
+    data = {
+        'configuration': ('configuration.yaml', configuration_path.open('rb'), 'text/yaml'),
+        'event_log': ('event_log.xes', event_log_path.open('rb'), 'application/xml'),
+    }
 
-    @task
-    def post6(self):
-        self.make_post()
-
-    @task
-    def post7(self):
-        self.make_post()
-
-    @task
-    def post8(self):
-        self.make_post()
-
-    @task
-    def post9(self):
-        self.make_post()
-
-    @task
-    def post10(self):
-        self.make_post()
-
-    def make_post(self):
-        configuration_path = self.assets_dir / 'sample.yaml'
-        event_log_path = self.assets_dir / 'PurchasingExample.xes'
-
-        data = {
-            'configuration': ('configuration.yaml', configuration_path.open('rb'), 'text/yaml'),
-            'event_log': ('event_log.xes', event_log_path.open('rb'), 'application/xml'),
-        }
-
-        content_type = 'multipart/form-data'
-
-        self.client.post(
-            self.endpoint_url,
-            headers={'Content-Type': content_type},
-            files=data,
-        )
+    client.post(
+        endpoint_url,
+        headers={'Content-Type': 'multipart/form-data'},
+        files=data,
+    )

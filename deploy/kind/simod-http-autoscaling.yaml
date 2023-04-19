@@ -35,8 +35,6 @@ spec:
               value: "/tmp/simod-volume/data"
             - name: SIMOD_HTTP_LOG_LEVEL
               value: "info"
-            - name: SIMOD_GUNICORN_WORKERS
-              value: "4"
             - name: MONGO_URL
               value: "mongodb://mongodb:27017"
             - name: MONGO_DATABASE

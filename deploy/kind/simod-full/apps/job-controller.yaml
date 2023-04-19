@@ -26,9 +26,9 @@ spec:
             - name: SIMOD_DOCKER_IMAGE
               value: nokal/simod:3.3.0
             - name: SIMOD_JOB_RESOURCE_CPU_REQUEST
-              value: "2"
+              value: "1"
             - name: SIMOD_JOB_RESOURCE_MEMORY_REQUEST
-              value: "2Gi"
+              value: "4Gi"
             - name: SIMOD_HTTP_HOST
               value: simod-http
             - name: SIMOD_HTTP_PORT
