@@ -15,26 +15,26 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: locust-master
-          image: nokal/simod-load-testing:0.1.3
+          image: nokal/simod-load-testing:0.2.1
           env:
             - name: SIMOD_HTTP_URL
               value: http://simod-http:8000
             - name: LOCUST_HOST
               value: http://simod-http:8000
             - name: LOCUST_USERS
-              value: "1"
+              value: "100"
             - name: LOCUST_SPAWN_RATE
               value: "1"
             - name: LOCUST_RUN_TIME
-              value: "1m"
+              value: "30s"
             - name: LOCUST_HEADLESS
               value: "true"
             - name: LOCUST_EXPECT_WORKERS
               value: "1"
             - name: LOCUST_MODE_MASTER
               value: "true"
-            - name: LOCUST_LOAD_PROFILE
-              value: "Hospital"
+            - name: LOCUST_FILE
+              value: "RequestForPaymentSingleTask.py"
             - name: REPORT_OUTPUT_DIR
               value: /tmp/simod-volume/locust
           ports:
@@ -61,7 +61,7 @@ spec:
             claimName: simod-volume-claim
       containers:
         - name: locust-worker
-          image: nokal/simod-load-testing:0.1.3
+          image: nokal/simod-load-testing:0.2.1
           env:
             - name: SIMOD_HTTP_URL
               value: http://simod-http:8000
@@ -69,6 +69,8 @@ spec:
               value: "true"
             - name: LOCUST_MASTER_NODE_HOST
               value: locust-master
+            - name: LOCUST_FILE
+              value: "RequestForPaymentSingleTask.py"
           ports:
             - containerPort: 8089
           volumeMounts:

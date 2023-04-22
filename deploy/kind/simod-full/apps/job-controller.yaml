@@ -37,7 +37,7 @@ spec:
               value: default
           resources:
             limits:
-              cpu: 1
+              cpu: "1"
               memory: 1Gi
             requests:
               cpu: 100m
