@@ -22,11 +22,11 @@ spec:
             - name: LOCUST_HOST
               value: http://simod-http:8000
             - name: LOCUST_USERS
-              value: "30"
+              value: "200"
             - name: LOCUST_SPAWN_RATE
-              value: "1"
+              value: "5"
             - name: LOCUST_RUN_TIME
-              value: "30s"
+              value: "3min"
             - name: LOCUST_HEADLESS
               value: "true"
             - name: LOCUST_EXPECT_WORKERS
@@ -34,7 +34,7 @@ spec:
             - name: LOCUST_MODE_MASTER
               value: "true"
             - name: LOCUST_FILE
-              value: "PrepaidTravelCostSingleTask.py"
+              value: "RequestForPaymentExponential.py"
             - name: REPORT_OUTPUT_DIR
               value: /tmp/simod-volume/locust
           ports:
@@ -70,7 +70,7 @@ spec:
             - name: LOCUST_MASTER_NODE_HOST
               value: locust-master
             - name: LOCUST_FILE
-              value: "PrepaidTravelCostSingleTask.py"              
+              value: "RequestForPaymentExponential.py"              
           ports:
             - containerPort: 8089
           volumeMounts:
