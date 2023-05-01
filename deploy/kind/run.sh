@@ -10,9 +10,9 @@ fi
 kind create cluster --config $CLUSTER_CONFIG
 
 # setting up monitoring and simod-on-containers dependencies
-kubectl apply --server-side -f simod-full/monitoring/setup
-kubectl apply --server-side -f simod-full/monitoring/
-kubectl apply -f simod-full/setup
+kubectl apply --server-side -f simod-on-containers/monitoring/setup
+kubectl apply --server-side -f simod-on-containers/monitoring/
+kubectl apply -f simod-on-containers/setup
 
 # getting node names in the cluster
 NODE_NAMES=`/opt/homebrew/bin/kind get nodes`
@@ -29,4 +29,4 @@ kind load docker-image --nodes $NODE_NAMES_STRING nokal/simod-load-testing:0.2.1
 kind load docker-image --nodes $NODE_NAMES_STRING nokal/simod:3.3.0
 
 # setting up simod-on-containers
-kubectl apply -f simod-full/apps
+kubectl apply -f simod-on-containers/apps

@@ -1,56 +1,48 @@
 # Deployment on kind
 
-## RabbitMQ
+Before everything, make sure there is a folder at `/tmp/simod-volume` on the host machine. This folder will be mounted as a volume in the cluster and used for storing user inputs and BPS discovery results.
+
+Create a cluster with 2 workers, for example:
 
 ```shell
-kubectl apply -f rabbitmq.yaml
+./run.sh kind-cluster-1-workers.yaml 
 ```
 
-## Prometheus & Grafana
+The helper script will:
 
-https://prometheus-operator.dev/docs/prologue/quick-start/
+- create a cluster,
+- deploy the monitoring solution,
+- deploy simod-on-containers dependencies,
+- deploy simod-on-containers.
+
+To delete the cluster, use:
 
 ```shell
-# download
-git clone https://github.com/prometheus-operator/kube-prometheus.git
-cd kube-prometheus
-git checkout tags/v0.12.0
-
-# run
-kubectl apply --server-side -f manifests/setup
-kubectl wait \
-	--for condition=Established \
-	--all CustomResourceDefinition \
-	--namespace=monitoring
-kubectl apply -f manifests/
-
-# port-forward
-kubectl --namespace monitoring port-forward svc/prometheus-k8s 9090
-kubectl --namespace monitoring port-forward svc/alertmanager-main 9093
-kubectl --namespace monitoring port-forward svc/grafana 3000
-
-# delete
-kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
+kind delete cluster 
 ```
 
-## Kubernetes Metrics
-
-https://github.com/kubernetes-sigs/metrics-server
-https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/
-https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/
+To check if simod-on-container pods are running, use:
 
 ```shell
-kubectl apply -f metrics-server.yaml
+kubectl get pods
 ```
 
-## Locust
+To make expose Web API to the host, use:
 
 ```shell
-kubectl apply -f locust.yaml
+kubectl port-forward service/simod-http 8000:8000
 ```
 
-## Mongo
+To expose Grafana to the host, use:
 
 ```shell
-kubectl apply -f mongo.yaml
+kubectl port-forward -n monitoring service/grafana 3000:3000
+```
+
+Simod's Grapha dashboard is located in the `./monitoring/grafana/` folder. Use the JSON file inside to import the dashboard through the Grafana UI.
+
+To run load testing with Locust, use:
+
+```shell
+kubectl apply -f deploy/kind/locust-scalability-travel.yaml
 ```
